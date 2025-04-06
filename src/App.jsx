@@ -13,6 +13,14 @@ export default function App() {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [userRole, setUserRole] = useState(null);
+  const [darkMode, setDarkMode] = useState(false);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+
+  // Update tampilan global saat darkMode berubah
+  useEffect(() => {
+    document.body.className = darkMode ? 'bg-dark text-light' : 'bg-light text-dark';
+  }, [darkMode]);
 
   useEffect(() => {
     if (token) {
@@ -36,19 +44,19 @@ export default function App() {
   // Jika belum login
   if (!token) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-br from-blue-100 to-blue-200 px-4 py-10">
-        <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-          <h1 className="text-3xl font-extrabold text-center text-blue-600 mb-6">Selamat Datang</h1>
+      <div className={`min-vh-100 d-flex flex-column justify-content-center align-items-center ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'} px-4 py-5`}>
+        <div className={`p-4 rounded-4 shadow w-100 max-w-md ${darkMode ? 'bg-secondary text-white' : 'bg-white'}`}>
+          <h1 className="text-center fw-bold mb-4">Selamat Datang</h1>
 
-          <div className="flex justify-center gap-4 mb-6">
+          <div className="d-flex justify-content-center gap-3 mb-4">
             <button
-              className={`px-4 py-2 rounded-lg font-medium border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition duration-300 ${view === "login" && "bg-blue-500 text-white"}`}
+              className={`btn ${view === "login" ? "btn-primary" : "btn-outline-primary"}`}
               onClick={() => setView("login")}
             >
               Login
             </button>
             <button
-              className={`px-4 py-2 rounded-lg font-medium border border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition duration-300 ${view === "register" && "bg-green-500 text-white"}`}
+              className={`btn ${view === "register" ? "btn-success" : "btn-outline-success"}`}
               onClick={() => setView("register")}
             >
               Register
@@ -66,65 +74,54 @@ export default function App() {
           )}
           {view === "register" && <Register onRegister={() => setView("login")} />}
         </div>
+
+        <button className="btn btn-sm btn-secondary mt-4" onClick={() => setDarkMode(!darkMode)}>
+          {darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
+        </button>
       </div>
     );
   }
 
   // Jika sudah login
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 px-4 py-8">
-      <header className="max-w-2xl mx-auto text-center mb-8">
-        <h1 className="text-4xl font-bold text-indigo-700">🛒 E-Commerce UI</h1>
-        <p className="text-sm text-gray-500">Tugas Akhir Praktikum SBD - Kelompok 27</p>
-        <button
-          className="mt-2 text-red-500 hover:underline text-sm"
-          onClick={handleLogout}
-        >
-          Logout
+    <div className={`min-vh-100 px-4 py-5 ${darkMode ? 'bg-dark text-light' : 'bg-light text-dark'}`}>
+      <header className="text-center mb-4">
+        <h1 className="fw-bold">🛒 E-Commerce UI</h1>
+        <p className="text-muted">Tugas Akhir Praktikum SBD - Kelompok 27</p>
+        <button className="btn btn-sm btn-danger mt-2" onClick={handleLogout}>Logout</button>
+        <br />
+        <button className="btn btn-sm btn-secondary mt-2" onClick={() => setDarkMode(!darkMode)}>
+          {darkMode ? '🌞 Light Mode' : '🌙 Dark Mode'}
         </button>
       </header>
 
-      <nav className="max-w-2xl mx-auto flex justify-center gap-3 mb-6">
+      <nav className="d-flex justify-content-center gap-2 mb-4">
         {userRole === "pembeli" && (
           <>
             <button
-              className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
-                view === "cart"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-100"
-              }`}
+              className={`btn ${view === "cart" ? "btn-primary" : "btn-outline-primary"}`}
               onClick={() => setView("cart")}
             >
               Keranjang
             </button>
             <button
-              className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
-                view === "orders"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-100"
-              }`}
+              className={`btn ${view === "orders" ? "btn-primary" : "btn-outline-primary"}`}
               onClick={() => setView("orders")}
             >
               Pesanan
             </button>
           </>
         )}
-
         <button
-          className={`px-4 py-2 rounded-lg font-medium transition duration-300 ${
-            view === "products"
-              ? "bg-indigo-600 text-white"
-              : "bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-100"
-          }`}
+          className={`btn ${view === "products" ? "btn-primary" : "btn-outline-primary"}`}
           onClick={() => setView("products")}
         >
           Produk
         </button>
       </nav>
 
-      <main className="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-xl transition-all duration-300">
+      <main className={`container p-4 rounded-4 shadow ${darkMode ? 'bg-secondary text-light' : 'bg-white'}`}>
         {view === "cart" && userRole === "pembeli" && <Cart token={token} />}
-
         {view === "orders" && userRole === "pembeli" && (
           <>
             <Orders token={token} onSelectOrder={setSelectedOrder} />

@@ -78,6 +78,7 @@ export default function Products({ token, role }) {
       <h2 className="text-xl font-bold mb-4">Daftar Produk</h2>
       <ul className="space-y-2 mb-6">
         {products.map((product) => (
+          
           <li key={product.id} className="border p-3 rounded bg-white shadow">
             <strong>{product.name}</strong> - Rp {product.price.toLocaleString()} <br />
             Stok: {product.stock} | Kategori ID: {product.category_id}
@@ -95,60 +96,106 @@ export default function Products({ token, role }) {
         ))}
       </ul>
 
+
+
       {/* Form Tambah Produk - hanya untuk penjual */}
       {role === "penjual" && (
-        <form onSubmit={handleAddProduct} className="space-y-3 bg-gray-100 p-4 rounded">
-          <h3 className="font-semibold">Tambah Produk Baru</h3>
-          {message && <p className="text-sm text-green-600">{message}</p>}
-          <input
-            type="text"
-            name="name"
-            placeholder="Nama Produk"
-            className="w-full p-2 border rounded"
-            value={newProduct.name}
-            onChange={handleInputChange}
-            required
-          />
-          <textarea
-            name="description"
-            placeholder="Deskripsi"
-            className="w-full p-2 border rounded"
-            value={newProduct.description}
-            onChange={handleInputChange}
-            required
-          />
-          <input
-            type="number"
-            name="price"
-            placeholder="Harga"
-            className="w-full p-2 border rounded"
-            value={newProduct.price}
-            onChange={handleInputChange}
-            required
-          />
-          <input
-            type="number"
-            name="stock"
-            placeholder="Stok"
-            className="w-full p-2 border rounded"
-            value={newProduct.stock}
-            onChange={handleInputChange}
-            required
-          />
-          <input
-            type="number"
-            name="category_id"
-            placeholder="Kategori ID"
-            className="w-full p-2 border rounded"
-            value={newProduct.category_id}
-            onChange={handleInputChange}
-            required
-          />
-          <button type="submit" className="bg-blue-500 text-white w-full p-2 rounded">
-            Tambahkan Produk
-          </button>
-        </form>
-      )}
+  <form onSubmit={handleAddProduct} className="bg-gray-100 p-6 rounded-lg shadow-md space-y-4 mt-6">
+    <h3 className="text-lg font-bold text-gray-800">Tambah Produk Baru</h3>
+    {message && <p className="text-sm text-green-600">{message}</p>}
+
+    <div>
+      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        Nama Produk
+      </label>
+      <input
+        type="text"
+        id="name"
+        name="name"
+        placeholder="Contoh: Baju Keren"
+        className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+        value={newProduct.name}
+        onChange={handleInputChange}
+        required
+      />
+    </div>
+
+    <div>
+      <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+        Deskripsi
+      </label>
+      <textarea
+        id="description"
+        name="description"
+        placeholder="Deskripsi produk"
+        className="mt-1 w-full p-2 border border-gray-300 rounded resize-none focus:outline-none focus:ring focus:ring-blue-200"
+        rows="3"
+        value={newProduct.description}
+        onChange={handleInputChange}
+        required
+      />
+    </div>
+
+    <div className="grid grid-cols-2 gap-4">
+      <div>
+        <label htmlFor="price" className="block text-sm font-medium text-gray-700">
+          Harga (Rp)
+        </label>
+        <input
+          type="number"
+          id="price"
+          name="price"
+          placeholder="10000"
+          className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+          value={newProduct.price}
+          onChange={handleInputChange}
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
+          Stok
+        </label>
+        <input
+          type="number"
+          id="stock"
+          name="stock"
+          placeholder="Jumlah stok"
+          className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+          value={newProduct.stock}
+          onChange={handleInputChange}
+          required
+        />
+      </div>
+    </div>
+
+    <div>
+      <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">
+        ID Kategori
+      </label>
+      <input
+        type="number"
+        id="category_id"
+        name="category_id"
+        placeholder="Contoh: 1"
+        className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
+        value={newProduct.category_id}
+        onChange={handleInputChange}
+        required
+      />
+    </div>
+
+    <button
+      type="submit"
+      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full transition duration-200"
+    >
+      Tambahkan Produk
+    </button>
+  </form>
+)}
+
+
     </div>
   );
 }
