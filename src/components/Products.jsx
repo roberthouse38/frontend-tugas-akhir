@@ -1,4 +1,3 @@
-// Tambahkan import useEffect, useState, axios, dan lain-lain seperti sebelumnya
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -19,6 +18,7 @@ export default function Products({ token, role }) {
     category_id: "",
   });
   const [editingProduct, setEditingProduct] = useState(null);
+  const [cart, setCart] = useState([]);
 
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -101,6 +101,27 @@ export default function Products({ token, role }) {
     }
   };
 
+  const handleAddToCart = async (product) => {
+    try {
+      await axios.post("http://localhost:3000/carts", {
+        product_id: product.id,
+        quantity: 1, // default 1, atau bisa dibuat dinamis
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
+      setSuccess("Produk berhasil dimasukkan ke keranjang");
+    } catch (err) {
+      console.error("Gagal menambahkan ke keranjang:", err);
+      setError("Gagal menambahkan ke keranjang");
+    }
+  };
+  
+
+  const handleRemoveFromCart = (id) => {
+    setCart(cart.filter((item) => item.id !== id));
+  };
+
   const getCategoryName = (categoryId) => {
     const category = categories.find((c) => c.id === categoryId);
     return category ? category.name : "Tidak diketahui";
@@ -114,6 +135,8 @@ export default function Products({ token, role }) {
       : true;
     return matchesCategory && matchesSearch;
   });
+
+  const totalCart = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <div>
@@ -153,22 +176,32 @@ export default function Products({ token, role }) {
                 <p className="card-text">Stok: {product.stock}</p>
                 <p className="card-text"><small>Kategori: {getCategoryName(product.category_id)}</small></p>
 
-                {role === "penjual" && (
-                  <div className="d-flex justify-content-between">
-                    <button className="btn btn-sm btn-warning" onClick={() => handleEditProduct(product)}>
-                      Edit
+                <div className="d-flex justify-content-between">
+                  {role === "pembeli" && (
+                    <button className="btn btn-sm btn-success" onClick={() => handleAddToCart(product)}>
+                      Tambah ke Keranjang
                     </button>
-                    <button className="btn btn-sm btn-danger" onClick={() => handleSoftDelete(product.id)}>
-                      Hapus
-                    </button>
-                  </div>
-                )}
+                  )}
+
+                  {role === "penjual" && (
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-warning" onClick={() => handleEditProduct(product)}>
+                        Edit
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleSoftDelete(product.id)}>
+                        Hapus
+                      </button>
+                    </div>
+                  )}
+                </div>
+
               </div>
             </div>
           </div>
         ))}
       </div>
 
+      {/* FORM PRODUK UNTUK PENJUAL */}
       {role === "penjual" && (
         <div className="card mt-4">
           <div className="card-header">
