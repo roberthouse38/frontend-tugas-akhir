@@ -13,7 +13,6 @@ export default function Trash({ token }) {
         },
       });
       setDeletedProducts(response.data);
-      console.log("Data dari backend:", response.data);
     } catch (error) {
       console.error("Gagal mengambil produk yang dihapus:", error);
     } finally {
@@ -26,11 +25,7 @@ export default function Trash({ token }) {
       await axios.put(
         `http://localhost:3000/products/restore/${productId}`,
         {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
       fetchDeletedProducts();
     } catch (error) {
@@ -41,9 +36,7 @@ export default function Trash({ token }) {
   const deleteProductPermanently = async (productId) => {
     try {
       await axios.delete(`http://localhost:3000/products/permanent/${productId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchDeletedProducts();
     } catch (error) {
@@ -55,12 +48,10 @@ export default function Trash({ token }) {
     fetchDeletedProducts();
   }, []);
 
-  if (loading) {
-    return <p>Memuat data produk yang dihapus...</p>;
-  }
+  if (loading) return <p>Memuat data produk yang dihapus...</p>;
 
   return (
-    <div>
+    <div className="container mt-4">
       <h4 className="mb-3">🗑️ Produk yang Dihapus</h4>
       {deletedProducts.length === 0 ? (
         <p className="text-muted">Tidak ada produk di dalam sampah.</p>
@@ -87,12 +78,6 @@ export default function Trash({ token }) {
                       onClick={() => restoreProduct(product.id)}
                     >
                       ♻️ Pulihkan
-                    </button>
-                    <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => deleteProductPermanently(product.id)}
-                    >
-                      🗑️ Hapus Permanen
                     </button>
                   </td>
                 </tr>
