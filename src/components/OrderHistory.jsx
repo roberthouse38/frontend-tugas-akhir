@@ -45,8 +45,8 @@ export default function OrderHistory({ token }) {
         )
       );
     } catch (error) {
-      console.error("Gagal mengubah status:", error);
-      alert("Gagal mengubah status pesanan.");
+      console.error("Gagal mengubah status:", error.response?.data || error.message);
+      alert("Gagal mengubah status pesanan: " + (error.response?.data?.message || "Terjadi kesalahan."));
     } finally {
       setUpdatingOrderId(null);
     }
@@ -78,7 +78,7 @@ export default function OrderHistory({ token }) {
                   <option value="pending">Menunggu</option>
                   <option value="processing">Diproses</option>
                   <option value="shipped">Dikirim</option>
-                  <option value="delivered">Diterima</option>
+                  <option value="completed">Diterima</option>
                   <option value="cancelled">Dibatalkan</option>
                 </select>
               </p>
