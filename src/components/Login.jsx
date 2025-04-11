@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
 
-export default function Login({ onLogin, goToRegister }) {
-    const [email, setEmail] = useState("");
+export default function Login({ onLogin, goToRegister, darkMode }) {
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     try {
       const response = await axios.post("http://localhost:3000/auth/login", {
@@ -21,42 +23,61 @@ export default function Login({ onLogin, goToRegister }) {
       onLogin(token);
     } catch (err) {
       setError("Login gagal. Cek email/password.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="max-w-sm mx-auto p-4 border rounded shadow">
-      <h2 className="text-xl font-bold mb-4 text-center">Login</h2>
-      {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
-      <form onSubmit={handleLogin} className="space-y-4">
-        <input
-          type="text"
-          placeholder="email"
-          className="w-full p-2 border rounded"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full p-2 border rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
-          Login
-        </button>
+    <div>
+      {error && (
+        <div className="alert alert-danger py-2" role="alert">
+          {error}
+        </div>
+      )}
+      
+      <form onSubmit={handleLogin}>
+        <div className="form-floating mb-3">
+          <input
+            type="email"
+            className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+            id="emailInput"
+            placeholder="name@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <label htmlFor="emailInput" className={darkMode ? 'text-light' : ''}>Email</label>
+        </div>
+        
+        <div className="form-floating mb-4">
+          <input
+            type="password"
+            className={`form-control ${darkMode ? 'bg-dark text-light border-secondary' : ''}`}
+            id="passwordInput"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <label htmlFor="passwordInput" className={darkMode ? 'text-light' : ''}>Password</label>
+        </div>
+        
+        <div className="d-grid">
+          <button 
+            type="submit" 
+            className="btn btn-primary py-2"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Memproses...
+              </>
+            ) : "Login"}
+          </button>
+        </div>
       </form>
-      <p className="mt-4 text-sm text-center">
-        Belum punya akun?{" "}
-        <button onClick={goToRegister} className="text-blue-600 hover:underline">
-          Daftar
-        </button>
-      </p>
     </div>
   );
 }

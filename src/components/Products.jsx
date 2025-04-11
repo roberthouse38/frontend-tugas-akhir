@@ -3,199 +3,302 @@ import axios from "axios";
 
 export default function Products({ token, role }) {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
     price: "",
     stock: "",
     category_id: "",
+    image_url: "", // Tambahkan image_url
   });
-  const [message, setMessage] = useState("");
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [cart, setCart] = useState([]);
 
   const fetchProducts = async () => {
+    setIsLoading(true);
     try {
       const response = await axios.get("http://localhost:3000/products");
       setProducts(response.data);
     } catch (err) {
-      console.error("Gagal fetch produk", err);
+      setError("Gagal memuat produk");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCategories = async () => {
+    try {
+      const response = await axios.get("http://localhost:3000/categories");
+      setCategories(response.data);
+    } catch (err) {
+      console.error("Gagal fetch kategori", err);
     }
   };
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
 
   const handleInputChange = (e) => {
     setNewProduct({ ...newProduct, [e.target.name]: e.target.value });
   };
 
-  const handleAddProduct = async (e) => {
+  const handleAddOrUpdateProduct = async (e) => {
     e.preventDefault();
-    setMessage("");
+    setIsSubmitting(true);
+    setError("");
+    setSuccess("");
 
     try {
-      await axios.post("http://localhost:3000/products", newProduct, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setMessage("Produk berhasil ditambahkan");
+      if (editingProduct) {
+        await axios.put(`http://localhost:3000/products/${editingProduct.id}`, newProduct, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSuccess("Produk berhasil diperbarui");
+      } else {
+        await axios.post("http://localhost:3000/products", newProduct, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setSuccess("Produk berhasil ditambahkan");
+      }
+      setNewProduct({ name: "", description: "", price: "", stock: "", category_id: "", image_url: "" });
+      setEditingProduct(null);
       fetchProducts();
-      setNewProduct({
-        name: "",
-        description: "",
-        price: "",
-        stock: "",
-        category_id: "",
-      });
     } catch (err) {
-      console.error("Gagal tambah produk", err.response?.data || err);
-      setMessage("Gagal menambahkan produk");
+      setError("Gagal menyimpan produk");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Tambahkan produk ke keranjang
-  const tambahKeKeranjang = async (productId) => {
+  const handleEditProduct = (product) => {
+    setNewProduct({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      stock: product.stock,
+      category_id: product.category_id,
+      image_url: product.image_url || "",
+    });
+    setEditingProduct(product);
+  };
+
+  const handleSoftDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:3000/products/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSuccess("Produk dipindahkan ke sampah");
+      fetchProducts();
+    } catch (err) {
+      setError("Gagal menghapus produk");
+    }
+  };
+
+  const handleAddToCart = async (product) => {
     try {
       await axios.post(
         "http://localhost:3000/carts",
-        { product_id: productId, quantity: 1 },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          product_id: product.id,
+          quantity: 1,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-      alert("Produk berhasil ditambahkan ke keranjang!");
+      setSuccess("Produk berhasil dimasukkan ke keranjang");
     } catch (err) {
-      console.error("Gagal tambah ke keranjang", err);
-      alert("Gagal menambahkan ke keranjang");
+      console.error("Gagal menambahkan ke keranjang:", err);
+      setError("Gagal menambahkan ke keranjang");
     }
   };
 
+  const handleRemoveFromCart = (id) => {
+    setCart(cart.filter((item) => item.id !== id));
+  };
+
+  const getCategoryName = (categoryId) => {
+    const category = categories.find((c) => c.id === categoryId);
+    return category ? category.name : "Tidak diketahui";
+  };
+
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory = selectedCategory ? product.category_id.toString() === selectedCategory : true;
+    const matchesSearch = searchQuery
+      ? product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchesCategory && matchesSearch;
+  });
+
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h2 className="text-xl font-bold mb-4">Daftar Produk</h2>
-      <ul className="space-y-2 mb-6">
-        {products.map((product) => (
-          
-          <li key={product.id} className="border p-3 rounded bg-white shadow">
-            <strong>{product.name}</strong> - Rp {product.price.toLocaleString()} <br />
-            Stok: {product.stock} | Kategori ID: {product.category_id}
-            <p className="text-sm text-gray-600 mt-1">{product.description}</p>
+    <div>
+      <h2>Daftar Produk</h2>
+      {error && <div className="alert alert-danger">{error}</div>}
+      {success && <div className="alert alert-success">{success}</div>}
 
-            {role === "pembeli" && (
-              <button
-                onClick={() => tambahKeKeranjang(product.id)}
-                className="mt-2 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition"
-              >
-                Tambah ke Keranjang
-              </button>
-            )}
-          </li>
+      <div className="mb-3 d-flex justify-content-between">
+        <input
+          className="form-control me-2"
+          style={{ width: "300px" }}
+          placeholder="Cari produk..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <select
+          className="form-select"
+          style={{ width: "200px" }}
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          <option value="">Semua Kategori</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="row">
+        {filteredProducts.map((product) => (
+          <div className="col-md-4 mb-4" key={product.id}>
+            <div className="card h-100">
+              {product.image_url && (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="card-img-top"
+                  style={{ height: "200px", objectFit: "cover" }}
+                />
+              )}
+              <div className="card-body">
+                <h5 className="card-title">{product.name}</h5>
+                <p className="card-text text-muted">{product.description}</p>
+                <p className="card-text fw-bold">Rp {product.price?.toLocaleString("id-ID")}</p>
+                <p className="card-text">Stok: {product.stock}</p>
+                <p className="card-text">
+                  <small>Kategori: {getCategoryName(product.category_id)}</small>
+                </p>
+
+                <div className="d-flex justify-content-between">
+                  {role === "pembeli" && (
+                    <button className="btn btn-sm btn-success" onClick={() => handleAddToCart(product)}>
+                      Tambah ke Keranjang
+                    </button>
+                  )}
+                  {role === "penjual" && (
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-warning" onClick={() => handleEditProduct(product)}>
+                        Edit
+                      </button>
+                      <button className="btn btn-sm btn-danger" onClick={() => handleSoftDelete(product.id)}>
+                        Hapus
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         ))}
-      </ul>
+      </div>
 
-
-
-      {/* Form Tambah Produk - hanya untuk penjual */}
+      {/* FORM UNTUK PENJUAL */}
       {role === "penjual" && (
-  <form onSubmit={handleAddProduct} className="bg-gray-100 p-6 rounded-lg shadow-md space-y-4 mt-6">
-    <h3 className="text-lg font-bold text-gray-800">Tambah Produk Baru</h3>
-    {message && <p className="text-sm text-green-600">{message}</p>}
-
-    <div>
-      <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-        Nama Produk
-      </label>
-      <input
-        type="text"
-        id="name"
-        name="name"
-        placeholder="Contoh: Baju Keren"
-        className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-        value={newProduct.name}
-        onChange={handleInputChange}
-        required
-      />
-    </div>
-
-    <div>
-      <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-        Deskripsi
-      </label>
-      <textarea
-        id="description"
-        name="description"
-        placeholder="Deskripsi produk"
-        className="mt-1 w-full p-2 border border-gray-300 rounded resize-none focus:outline-none focus:ring focus:ring-blue-200"
-        rows="3"
-        value={newProduct.description}
-        onChange={handleInputChange}
-        required
-      />
-    </div>
-
-    <div className="grid grid-cols-2 gap-4">
-      <div>
-        <label htmlFor="price" className="block text-sm font-medium text-gray-700">
-          Harga (Rp)
-        </label>
-        <input
-          type="number"
-          id="price"
-          name="price"
-          placeholder="10000"
-          className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-          value={newProduct.price}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="stock" className="block text-sm font-medium text-gray-700">
-          Stok
-        </label>
-        <input
-          type="number"
-          id="stock"
-          name="stock"
-          placeholder="Jumlah stok"
-          className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-          value={newProduct.stock}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-    </div>
-
-    <div>
-      <label htmlFor="category_id" className="block text-sm font-medium text-gray-700">
-        ID Kategori
-      </label>
-      <input
-        type="number"
-        id="category_id"
-        name="category_id"
-        placeholder="Contoh: 1"
-        className="mt-1 w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring focus:ring-blue-200"
-        value={newProduct.category_id}
-        onChange={handleInputChange}
-        required
-      />
-    </div>
-
-    <button
-      type="submit"
-      className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded w-full transition duration-200"
-    >
-      Tambahkan Produk
-    </button>
-  </form>
-)}
-
-
+        <div className="card mt-4">
+          <div className="card-header">
+            <h5>{editingProduct ? "Edit Produk" : "Tambah Produk Baru"}</h5>
+          </div>
+          <div className="card-body">
+            <form onSubmit={handleAddOrUpdateProduct}>
+              <div className="mb-3">
+                <label>Nama Produk</label>
+                <input
+                  className="form-control"
+                  name="name"
+                  value={newProduct.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="mb-3">
+                <label>Deskripsi</label>
+                <textarea
+                  className="form-control"
+                  name="description"
+                  value={newProduct.description}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div className="row">
+                <div className="col-md-6 mb-3">
+                  <label>Harga</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="price"
+                    value={newProduct.price}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                <div className="col-md-6 mb-3">
+                  <label>Stok</label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    name="stock"
+                    value={newProduct.stock}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="mb-3">
+                <label>URL Gambar</label>
+                <input
+                  type="url"
+                  className="form-control"
+                  name="image_url"
+                  value={newProduct.image_url}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="mb-3">
+                <label>Kategori</label>
+                <select
+                  className="form-select"
+                  name="category_id"
+                  value={newProduct.category_id}
+                  onChange={handleInputChange}
+                  required
+                >
+                  <option value="">-- Pilih Kategori --</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button className="btn btn-primary" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Menyimpan..." : editingProduct ? "Perbarui Produk" : "Tambahkan Produk"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
