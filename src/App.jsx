@@ -6,6 +6,7 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 import Products from "./components/Products";
 import Trash from "./components/Trash";
+import OrderHistory from "./components/OrderHistory";
 import { jwtDecode } from "jwt-decode";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
@@ -191,6 +192,16 @@ export default function App() {
                 </button>
               </li>
             )}
+            {userRole === "penjual" && (
+              <li className="nav-item">
+                <button
+                  className={`nav-link px-3 ${view === "orderhistory" ? "active" : ""}`}
+                  onClick={() => setView("orderhistory")}
+                >
+                  <span className="me-1">🛒</span> Pesanan
+                </button>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -210,6 +221,7 @@ export default function App() {
             )}
             {view === "products" && <Products token={token} role={userRole} />}
             {view === "trash" && userRole === "penjual" && <Trash token={token} />}
+            {view === "orderhistory" && userRole === "penjual" && <OrderHistory token={token} />}
           </div>
         </main>
 
