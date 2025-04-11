@@ -16,6 +16,7 @@ export default function Products({ token, role }) {
     price: "",
     stock: "",
     category_id: "",
+    image_url: "", // Tambahkan image_url
   });
   const [editingProduct, setEditingProduct] = useState(null);
   const [cart, setCart] = useState([]);
@@ -68,7 +69,7 @@ export default function Products({ token, role }) {
         });
         setSuccess("Produk berhasil ditambahkan");
       }
-      setNewProduct({ name: "", description: "", price: "", stock: "", category_id: "" });
+      setNewProduct({ name: "", description: "", price: "", stock: "", category_id: "", image_url: "" });
       setEditingProduct(null);
       fetchProducts();
     } catch (err) {
@@ -85,6 +86,7 @@ export default function Products({ token, role }) {
       price: product.price,
       stock: product.stock,
       category_id: product.category_id,
+      image_url: product.image_url || "",
     });
     setEditingProduct(product);
   };
@@ -103,20 +105,22 @@ export default function Products({ token, role }) {
 
   const handleAddToCart = async (product) => {
     try {
-      await axios.post("http://localhost:3000/carts", {
-        product_id: product.id,
-        quantity: 1, // default 1, atau bisa dibuat dinamis
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-  
+      await axios.post(
+        "http://localhost:3000/carts",
+        {
+          product_id: product.id,
+          quantity: 1,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setSuccess("Produk berhasil dimasukkan ke keranjang");
     } catch (err) {
       console.error("Gagal menambahkan ke keranjang:", err);
       setError("Gagal menambahkan ke keranjang");
     }
   };
-  
 
   const handleRemoveFromCart = (id) => {
     setCart(cart.filter((item) => item.id !== id));
@@ -131,12 +135,10 @@ export default function Products({ token, role }) {
     const matchesCategory = selectedCategory ? product.category_id.toString() === selectedCategory : true;
     const matchesSearch = searchQuery
       ? product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      product.description.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
     return matchesCategory && matchesSearch;
   });
-
-  const totalCart = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <div>
@@ -147,20 +149,22 @@ export default function Products({ token, role }) {
       <div className="mb-3 d-flex justify-content-between">
         <input
           className="form-control me-2"
-          style={{ width: '300px' }}
+          style={{ width: "300px" }}
           placeholder="Cari produk..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <select
           className="form-select"
-          style={{ width: '200px' }}
+          style={{ width: "200px" }}
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
           <option value="">Semua Kategori</option>
           {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>{cat.name}</option>
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
           ))}
         </select>
       </div>
@@ -169,12 +173,22 @@ export default function Products({ token, role }) {
         {filteredProducts.map((product) => (
           <div className="col-md-4 mb-4" key={product.id}>
             <div className="card h-100">
+              {product.image_url && (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="card-img-top"
+                  style={{ height: "200px", objectFit: "cover" }}
+                />
+              )}
               <div className="card-body">
                 <h5 className="card-title">{product.name}</h5>
                 <p className="card-text text-muted">{product.description}</p>
                 <p className="card-text fw-bold">Rp {product.price?.toLocaleString("id-ID")}</p>
                 <p className="card-text">Stok: {product.stock}</p>
-                <p className="card-text"><small>Kategori: {getCategoryName(product.category_id)}</small></p>
+                <p className="card-text">
+                  <small>Kategori: {getCategoryName(product.category_id)}</small>
+                </p>
 
                 <div className="d-flex justify-content-between">
                   {role === "pembeli" && (
@@ -182,7 +196,6 @@ export default function Products({ token, role }) {
                       Tambah ke Keranjang
                     </button>
                   )}
-
                   {role === "penjual" && (
                     <div className="d-flex gap-2">
                       <button className="btn btn-sm btn-warning" onClick={() => handleEditProduct(product)}>
@@ -194,14 +207,13 @@ export default function Products({ token, role }) {
                     </div>
                   )}
                 </div>
-
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* FORM PRODUK UNTUK PENJUAL */}
+      {/* FORM UNTUK PENJUAL */}
       {role === "penjual" && (
         <div className="card mt-4">
           <div className="card-header">
@@ -254,6 +266,16 @@ export default function Products({ token, role }) {
                 </div>
               </div>
               <div className="mb-3">
+                <label>URL Gambar</label>
+                <input
+                  type="url"
+                  className="form-control"
+                  name="image_url"
+                  value={newProduct.image_url}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="mb-3">
                 <label>Kategori</label>
                 <select
                   className="form-select"
@@ -264,7 +286,9 @@ export default function Products({ token, role }) {
                 >
                   <option value="">-- Pilih Kategori --</option>
                   {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
                   ))}
                 </select>
               </div>

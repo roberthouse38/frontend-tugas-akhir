@@ -79,6 +79,10 @@ export default function Trash({ token }) {
                     >
                       ♻️ Pulihkan
                     </button>
+                    <button className="btn btn-sm btn-danger"
+                      onClick={() => deleteProductPermanently(product.id)}>
+                      🗑️ Hapus Permanen
+                    </button>
                   </td>
                 </tr>
               ))}
